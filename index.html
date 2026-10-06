@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Finanzas">
+  <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <title>Finanzas</title>
+  <style>
+    :root {
+      --fondo: #f5f5f7;
+      --tarjeta: #ffffff;
+      --texto: #1d1d1f;
+      --suave: #86868b;
+      --borde: #e3e3e8;
+      --gasto: #d4473b;
+      --ingreso: #2e8b57;
+      --acento: #1d1d1f;
+      --acento-texto: #ffffff;
+      --radio: 16px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --fondo: #000000;
+        --tarjeta: #1c1c1e;
+        --texto: #f5f5f7;
+        --suave: #98989d;
+        --borde: #2c2c2e;
+        --gasto: #ff6b5e;
+        --ingreso: #4cd486;
+        --acento: #f5f5f7;
+        --acento-texto: #000000;
+      }
+    }
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      background: var(--fondo);
+      color: var(--texto);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .app {
+      max-width: 560px;
+      margin: 0 auto;
+      padding: calc(env(safe-area-inset-top) + 12px) 16px calc(env(safe-area-inset-bottom) + 32px);
+    }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    h1 { font-size: 26px; margin: 0; }
+    .icono { background: none; border: 0; color: var(--suave); font-size: 14px; padding: 8px; }
+
+    .seg { display: flex; background: var(--borde); border-radius: 12px; padding: 3px; gap: 3px; }
+    .seg button {
+      flex: 1; border: 0; background: transparent; color: var(--texto);
+      padding: 9px 6px; border-radius: 9px; font-size: 15px; font-weight: 600;
+    }
+    .seg button.on { background: var(--tarjeta); box-shadow: 0 1px 3px rgba(0, 0, 0, .12); }
+    .seg.peq { margin-top: 12px; }
+    .seg.peq button { font-size: 13px; padding: 7px 4px; font-weight: 500; }
+
+    .tarjeta { background: var(--tarjeta); border-radius: var(--radio); padding: 16px; margin-top: 12px; }
+    .etiqueta {
+      font-size: 12px; color: var(--suave); margin: 0 0 6px;
+      text-transform: uppercase; letter-spacing: .05em;
+    }
+    .saldo { font-size: 34px; font-weight: 700; letter-spacing: -.02em; }
+    .sub { font-size: 13px; color: var(--suave); margin-top: 2px; }
+
+    .filtros { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+    select {
+      width: 100%; padding: 10px; font-size: 15px;
+      border: 1px solid var(--borde); border-radius: 12px;
+      background: var(--tarjeta); color: var(--texto);
+      -webkit-appearance: none; appearance: none;
+    }
+
+    .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+    .kpi { background: var(--tarjeta); border-radius: var(--radio); padding: 12px; min-width: 0; }
+    .kpi .v { font-size: 16px; font-weight: 700; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .gasto { color: var(--gasto); }
+    .ingreso { color: var(--ingreso); }
+
+    .fila { padding: 9px 0; border-bottom: 1px solid var(--borde); }
+    .fila:last-child { border-bottom: 0; }
+    .fila .l { display: flex; justify-content: space-between; gap: 8px; font-size: 15px; }
+    .fila .l span:last-child { font-weight: 600; white-space: nowrap; }
+    .barra { height: 6px; background: var(--borde); border-radius: 3px; margin-top: 6px; overflow: hidden; }
+    .barra i { display: block; height: 100%; border-radius: 3px; }
+    .pct { font-size: 12px; color: var(--suave); margin-left: 6px; font-weight: 400; }
+    .vacio { color: var(--suave); font-size: 14px; padding: 6px 0; }
+
+    .grafico { display: flex; align-items: flex-end; gap: 4px; height: 130px; margin-top: 8px; }
+    .col {
+      flex: 1; height: 100%; display: flex; flex-direction: column;
+      align-items: center; justify-content: flex-end; gap: 4px;
+      background: none; border: 0; padding: 0; color: inherit;
+    }
+    .col .bs { display: flex; gap: 2px; align-items: flex-end; justify-content: center; width: 100%; flex: 1; }
+    .col .bs i { width: 45%; border-radius: 3px 3px 0 0; min-height: 1px; }
+    .col small { font-size: 10px; color: var(--suave); }
+    .col.sel small { color: var(--texto); font-weight: 700; }
+    .leyenda { display: flex; gap: 14px; font-size: 12px; color: var(--suave); margin-top: 8px; }
+    .leyenda b { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+
+    .estado { text-align: center; font-size: 12px; color: var(--suave); margin-top: 14px; }
+
+    .modal {
+      position: fixed; inset: 0; z-index: 10; padding: 24px;
+      background: rgba(0, 0, 0, .45);
+      display: none; align-items: center; justify-content: center;
+    }
+    .modal.on { display: flex; }
+    .modal form { background: var(--tarjeta); border-radius: var(--radio); padding: 20px; width: 100%; max-width: 360px; }
+    .modal input {
+      width: 100%; padding: 12px; font-size: 16px; margin: 10px 0;
+      border: 1px solid var(--borde); border-radius: 12px;
+      background: var(--fondo); color: var(--texto);
+    }
+    .modal button {
+      width: 100%; padding: 12px; border: 0; border-radius: 12px;
+      background: var(--acento); color: var(--acento-texto);
+      font-size: 16px; font-weight: 600;
+    }
+    .error { color: var(--gasto); font-size: 13px; min-height: 18px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Finanzas</h1>
+      <button class="icono" id="btnClave">Clave</button>
+    </header>
+
+    <div class="seg" id="ambito">
+      <button data-v="personal" class="on">Personal</button>
+      <button data-v="casa">Casa</button>
+    </div>
+
+    <div class="tarjeta">
+      <p class="etiqueta">Saldo actual</p>
+      <div class="saldo" id="saldo">—</div>
+      <div class="sub" id="fechaSaldo"></div>
+    </div>
+
+    <div class="filtros">
+      <select id="anio" aria-label="Año"></select>
+      <select id="mes" aria-label="Mes"></select>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi"><p class="etiqueta">Ingresos</p><div class="v ingreso" id="kIng">—</div></div>
+      <div class="kpi"><p class="etiqueta">Gastos</p><div class="v gasto" id="kGas">—</div></div>
+      <div class="kpi"><p class="etiqueta">Balance</p><div class="v" id="kBal">—</div></div>
+    </div>
+
+    <div class="tarjeta">
+      <p class="etiqueta" id="tituloGrafico">Evolución</p>
+      <div class="grafico" id="grafico"></div>
+      <div class="leyenda">
+        <span><b style="background:var(--ingreso)"></b>Ingresos</span>
+        <span><b style="background:var(--gasto)"></b>Gastos</span>
+      </div>
+    </div>
+
+    <div class="tarjeta">
+      <p class="etiqueta">Gastos por referencia</p>
+      <div id="listaGastos"></div>
+    </div>
+
+    <div class="tarjeta">
+      <p class="etiqueta">Ingresos por referencia</p>
+      <div id="listaIngresos"></div>
+    </div>
+
+    <div class="estado" id="estado"></div>
+  </div>
+
+  <div class="modal" id="modal">
+    <form id="formClave">
+      <p class="etiqueta">Clave de acceso</p>
+      <div class="sub">Se guarda solo en este dispositivo.</div>
+      <input id="inputClave" type="password" autocomplete="current-password"
+             autocapitalize="off" autocorrect="off" spellcheck="false">
+      <div class="error" id="errorClave"></div>
+      <button type="submit">Entrar</button>
+    </form>
+  </div>
+
+  <script>
+    // ⇩⇩ Pega aquí la URL de tu aplicación web de Apps Script (la que termina en /exec) ⇩⇩
+    const API_URL = 'https://script.google.com/macros/s/AKfycbzs3jmFYfrGeXpBx9Wo46BOYCa7TggTEooyxuMwBLJNQhcAWO37hWMs7Za_V4Ee5htlYw/exec';
+
+    const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    const MESES_LARGOS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    const eur = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' });
+    const $ = id => document.getElementById(id);
+
+    const estado = {
+      ambito: 'personal',
+      anio: null,
+      mes: null,       // null = elegir automáticamente; 'todos' = todo el año; 1..12
+      datos: {}
+    };
+
+    // ---------- Utilidades ----------
+    function leer(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+    function escribir(k, v) {
+      try { v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) { }
+    }
+    function esc(s) {
+      return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    }
+    function conSigno(n) { return (n > 0 ? '+' : '') + eur.format(n); }
+    function aviso(t) { $('estado').textContent = t; }
+
+    function segmento(id, alCambiar) {
+      const el = $(id);
+      el.addEventListener('click', e => {
+        const b = e.target.closest('button');
+        if (!b || b.classList.contains('on')) return;
+        [...el.children].forEach(x => x.classList.toggle('on', x === b));
+        alCambiar(b.dataset.v);
+      });
+    }
+    function marcarSeg(id, v) {
+      [...$(id).children].forEach(b => b.classList.toggle('on', b.dataset.v === v));
+    }
+
+    // Año y mes del movimiento (según la Fecha Oper)
+    function periodo(g) {
+      return { a: g.anio, m: g.mes };
+    }
+
+    // Neto por Referencia: así una devolución o un Bizum recibido resta del gasto
+    function netos(grupos) {
+      const porRef = {};
+      grupos.forEach(g => {
+        porRef[g.ref] = (porRef[g.ref] || 0) + g.ingresos - g.gastos;
+      });
+      const gastos = [], ingresos = [];
+      Object.keys(porRef).forEach(ref => {
+        const n = Math.round(porRef[ref] * 100) / 100;
+        if (n < 0) gastos.push({ ref, v: -n });
+        else if (n > 0) ingresos.push({ ref, v: n });
+      });
+      const totG = gastos.reduce((s, x) => s + x.v, 0);
+      const totI = ingresos.reduce((s, x) => s + x.v, 0);
+      return { gastos, ingresos, totG, totI };
+    }
+
+    // ---------- Pintado ----------
+    function mostrar() {
+      const d = estado.datos[estado.ambito];
+      if (!d) {
+        $('saldo').textContent = '—';
+        $('fechaSaldo').textContent = '';
+        ['kIng', 'kGas', 'kBal'].forEach(id => $(id).textContent = '—');
+        return;
+      }
+      $('saldo').textContent = d.saldo === null ? '—' : eur.format(d.saldo);
+      $('fechaSaldo').textContent = d.fechaSaldo ? 'Último movimiento: ' + d.fechaSaldo : '';
+      prepararFiltros(d.grupos);
+      pintar(d.grupos);
+    }
+
+    function prepararFiltros(grupos) {
+      const anios = [...new Set(grupos.map(g => periodo(g).a))].sort((x, y) => y - x);
+      if (!anios.length) {
+        $('anio').innerHTML = '<option>Sin datos</option>';
+        $('mes').innerHTML = '';
+        return;
+      }
+      if (!anios.includes(estado.anio)) estado.anio = anios[0];
+
+      const meses = [...new Set(grupos.filter(g => periodo(g).a === estado.anio).map(g => periodo(g).m))]
+        .sort((x, y) => x - y);
+      if (estado.mes === null || (estado.mes !== 'todos' && !meses.includes(estado.mes))) {
+        estado.mes = meses[meses.length - 1];
+      }
+
+      $('anio').innerHTML = anios.map(a => `<option value="${a}"${a === estado.anio ? ' selected' : ''}>${a}</option>`).join('');
+      $('mes').innerHTML =
+        `<option value="todos"${estado.mes === 'todos' ? ' selected' : ''}>Todo el año</option>` +
+        meses.map(m => `<option value="${m}"${m === estado.mes ? ' selected' : ''}>${MESES_LARGOS[m - 1]}</option>`).join('');
+    }
+
+    function pintar(grupos) {
+      const delAnio = grupos.filter(g => periodo(g).a === estado.anio);
+      const sel = estado.mes === 'todos' ? delAnio : delAnio.filter(g => periodo(g).m === estado.mes);
+      const r = netos(sel);
+
+      const balance = r.totI - r.totG;
+      $('kIng').textContent = eur.format(r.totI);
+      $('kGas').textContent = eur.format(r.totG);
+      $('kBal').textContent = conSigno(balance);
+      $('kBal').className = 'v ' + (balance >= 0 ? 'ingreso' : 'gasto');
+
+      pintarLista('listaGastos', r.gastos, r.totG, 'var(--gasto)');
+      pintarLista('listaIngresos', r.ingresos, r.totI, 'var(--ingreso)');
+      pintarGrafico(delAnio);
+    }
+
+    function pintarLista(id, items, total, color) {
+      if (!items.length) {
+        $(id).innerHTML = '<div class="vacio">Nada en este periodo</div>';
+        return;
+      }
+      items.sort((x, y) => y.v - x.v);
+      const max = items[0].v;
+      $(id).innerHTML = items.map(x => `
+        <div class="fila">
+          <div class="l">
+            <span>${esc(x.ref)}</span>
+            <span>${eur.format(x.v)}<span class="pct">${total ? Math.round(x.v / total * 100) : 0}%</span></span>
+          </div>
+          <div class="barra"><i style="width:${(x.v / max * 100).toFixed(1)}%;background:${color}"></i></div>
+        </div>`).join('');
+    }
+
+    function pintarGrafico(delAnio) {
+      const porMes = [];
+      for (let m = 1; m <= 12; m++) {
+        porMes.push(netos(delAnio.filter(g => periodo(g).m === m)));
+      }
+      const max = Math.max(1, ...porMes.map(r => Math.max(r.totI, r.totG)));
+      $('tituloGrafico').textContent = 'Evolución ' + estado.anio;
+      $('grafico').innerHTML = porMes.map((r, i) => `
+        <button class="col${estado.mes === i + 1 ? ' sel' : ''}" data-m="${i + 1}" aria-label="${MESES_LARGOS[i]}">
+          <span class="bs">
+            <i style="height:${(r.totI / max * 100).toFixed(1)}%;background:var(--ingreso)"></i>
+            <i style="height:${(r.totG / max * 100).toFixed(1)}%;background:var(--gasto)"></i>
+          </span>
+          <small>${MESES[i]}</small>
+        </button>`).join('');
+    }
+
+    // ---------- Datos ----------
+    function cargar() {
+      const clave = leer('fin_clave');
+      if (!clave) { pedirClave(); return; }
+      if (API_URL.indexOf('PEGA_AQUI') >= 0) { aviso('Falta poner la URL de la API en el código'); return; }
+
+      const ambito = estado.ambito;
+      aviso('Actualizando…');
+      const url = API_URL + '?ambito=' + encodeURIComponent(ambito) +
+        '&clave=' + encodeURIComponent(clave) + '&t=' + Date.now();
+
+      fetch(url)
+        .then(r => r.json())
+        .then(r => {
+          if (!r.ok) {
+            if (r.error === 'Clave incorrecta') {
+              escribir('fin_clave', null);
+              pedirClave('Clave incorrecta');
+            } else {
+              aviso('Error: ' + r.error);
+            }
+            return;
+          }
+          estado.datos[ambito] = r.datos;
+          escribir('fin_cache2_' + ambito, JSON.stringify(r.datos));
+          if (estado.ambito === ambito) mostrar();
+          const h = new Date();
+          aviso('Actualizado a las ' + h.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }));
+        })
+        .catch(() => aviso('Sin conexión: mostrando los últimos datos guardados'));
+    }
+
+    function pedirClave(msg) {
+      $('errorClave').textContent = msg || '';
+      $('inputClave').value = '';
+      $('modal').classList.add('on');
+      setTimeout(() => $('inputClave').focus(), 50);
+    }
+
+    // ---------- Eventos ----------
+    segmento('ambito', v => { estado.ambito = v; escribir('fin_ambito', v); mostrar(); cargar(); });
+
+    $('anio').addEventListener('change', e => { estado.anio = Number(e.target.value); mostrar(); });
+    $('mes').addEventListener('change', e => {
+      estado.mes = e.target.value === 'todos' ? 'todos' : Number(e.target.value);
+      mostrar();
+    });
+    $('grafico').addEventListener('click', e => {
+      const b = e.target.closest('.col');
+      if (!b) return;
+      const m = Number(b.dataset.m);
+      const d = estado.datos[estado.ambito];
+      const hay = d && d.grupos.some(g => periodo(g).a === estado.anio && periodo(g).m === m);
+      if (!hay) return;
+      estado.mes = estado.mes === m ? 'todos' : m;
+      mostrar();
+    });
+
+    $('btnClave').addEventListener('click', () => pedirClave());
+    $('formClave').addEventListener('submit', e => {
+      e.preventDefault();
+      const v = $('inputClave').value.trim();
+      if (!v) return;
+      escribir('fin_clave', v);
+      $('modal').classList.remove('on');
+      cargar();
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && leer('fin_clave')) cargar();
+    });
+
+    // ---------- Inicio ----------
+    estado.ambito = leer('fin_ambito') === 'casa' ? 'casa' : 'personal';
+    marcarSeg('ambito', estado.ambito);
+    ['personal', 'casa'].forEach(a => {
+      try {
+        const c = leer('fin_cache2_' + a);
+        if (c) estado.datos[a] = JSON.parse(c);
+      } catch (e) { }
+    });
+    mostrar();
+    cargar();
+  </script>
+</body>
+</html>
