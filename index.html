@@ -308,6 +308,11 @@
     // ⇩⇩ Pega aquí la URL de tu aplicación web de Apps Script (la que termina en /exec) ⇩⇩
     const API_URL = 'https://script.google.com/macros/s/AKfycbzs3jmFYfrGeXpBx9Wo46BOYCa7TggTEooyxuMwBLJNQhcAWO37hWMs7Za_V4Ee5htlYw/exec';
 
+    // Versión de Código.gs que necesita esta página (debe coincidir con VERSION_API)
+    const VERSION_API = 3;
+    const AVISO_VERSION = '⚠ Apps Script tiene una versión antigua del código: haz Implementar → ' +
+      'Gestionar implementaciones → lápiz → Versión: Nueva versión → Implementar.';
+
     const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
     const MESES_LARGOS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
       'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -492,6 +497,7 @@
           estado.datos[ambito] = r.datos;
           escribir('fin_cache2_' + ambito, JSON.stringify(r.datos));
           if (estado.ambito === ambito) mostrar();
+          if (!(r.datos.version >= VERSION_API)) { aviso(AVISO_VERSION); return; }
           const h = new Date();
           aviso('Actualizado a las ' + h.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }));
         })
@@ -594,6 +600,12 @@
         .then(leerRespuesta)
         .then(r => {
           if (!r.ok) throw new Error(r.error);
+          // Confirmación real: la API dice que ha escrito/borrado en la hoja
+          const confirmado = cuerpo.accion === 'guardar' ? r.guardado === true : r.borrado === true;
+          if (!confirmado) {
+            throw new Error((cuerpo.accion === 'guardar' ? 'No se ha guardado' : 'No se ha borrado') +
+              '. ' + AVISO_VERSION.replace('⚠ ', ''));
+          }
           estado.datos.personal = r.datos;
           escribir('fin_cache2_personal', JSON.stringify(r.datos));
           if (estado.ambito === 'personal') mostrar();
