@@ -47,7 +47,7 @@
     .app {
       max-width: 560px;
       margin: 0 auto;
-      padding: calc(env(safe-area-inset-top) + 12px) 16px calc(env(safe-area-inset-bottom) + 32px);
+      padding: calc(env(safe-area-inset-top) + 12px) 16px calc(env(safe-area-inset-bottom) + 90px);
     }
     header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
     h1 { font-size: 26px; margin: 0; }
@@ -127,6 +127,79 @@
       font-size: 16px; font-weight: 600;
     }
     .error { color: var(--gasto); font-size: 13px; min-height: 18px; }
+
+    /* ---------- Efectivo ---------- */
+    .cartera { font-size: 14px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--borde); display: none; }
+    .cartera b { font-weight: 700; }
+
+    .fab {
+      position: fixed; z-index: 5;
+      right: 16px; bottom: calc(env(safe-area-inset-bottom) + 16px);
+      border: 0; border-radius: 999px; padding: 14px 20px;
+      background: var(--acento); color: var(--acento-texto);
+      font-size: 16px; font-weight: 700;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, .25);
+      display: none;
+    }
+    .fab.on { display: block; }
+
+    .panel {
+      position: fixed; inset: 0; z-index: 8;
+      background: rgba(0, 0, 0, .45);
+      display: none; align-items: flex-end; justify-content: center;
+    }
+    .panel.on { display: flex; }
+    .hoja {
+      background: var(--fondo); width: 100%; max-width: 560px;
+      max-height: 92vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+      border-radius: 20px 20px 0 0;
+      padding: 16px 16px calc(env(safe-area-inset-bottom) + 20px);
+    }
+    .hoja-cab { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .hoja-cab h2 { font-size: 20px; margin: 0; }
+    .cerrar { background: none; border: 0; color: var(--suave); font-size: 15px; padding: 8px; }
+
+    .importe {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--tarjeta); border-radius: var(--radio); padding: 10px 16px;
+    }
+    .importe input {
+      border: 0; outline: 0; width: 100%; background: transparent; color: var(--texto);
+      font-size: 38px; font-weight: 700;
+    }
+    .importe span { font-size: 30px; color: var(--suave); }
+    #tipo button.on[data-v="gasto"] { color: var(--gasto); }
+    #tipo button.on[data-v="ingreso"] { color: var(--ingreso); }
+
+    .hoja label.t {
+      display: block; margin: 14px 0 6px;
+      font-size: 12px; color: var(--suave); text-transform: uppercase; letter-spacing: .05em;
+    }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      border: 1px solid var(--borde); background: var(--tarjeta); color: var(--texto);
+      border-radius: 999px; padding: 9px 14px; font-size: 15px;
+    }
+    .chip.on { background: var(--acento); border-color: var(--acento); color: var(--acento-texto); }
+    .chip.nueva { border-style: dashed; color: var(--suave); }
+    .campo {
+      width: 100%; padding: 12px; font-size: 16px;
+      border: 1px solid var(--borde); border-radius: 12px;
+      background: var(--tarjeta); color: var(--texto);
+    }
+    #refNueva { margin-top: 8px; display: none; }
+    .guardar {
+      width: 100%; margin-top: 18px; padding: 15px; border: 0; border-radius: var(--radio);
+      background: var(--acento); color: var(--acento-texto); font-size: 17px; font-weight: 700;
+    }
+    .guardar:disabled { opacity: .5; }
+    .msg { min-height: 20px; margin-top: 8px; text-align: center; font-size: 14px; }
+    .apunte { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--borde); font-size: 15px; }
+    .apunte:last-child { border-bottom: 0; }
+    .apunte .txt { flex: 1; min-width: 0; }
+    .apunte .txt small { display: block; color: var(--suave); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .apunte strong { white-space: nowrap; }
+    .borrar { background: none; border: 0; color: var(--suave); font-size: 20px; padding: 0 4px; line-height: 1; }
   </style>
 </head>
 <body>
@@ -145,6 +218,7 @@
       <p class="etiqueta">Saldo actual</p>
       <div class="saldo" id="saldo">—</div>
       <div class="sub" id="fechaSaldo"></div>
+      <div class="cartera" id="cartera"></div>
     </div>
 
     <div class="filtros">
@@ -178,6 +252,45 @@
     </div>
 
     <div class="estado" id="estado"></div>
+  </div>
+
+  <button class="fab" id="fab">+ Apuntar</button>
+
+  <div class="panel" id="panel">
+    <div class="hoja">
+      <div class="hoja-cab">
+        <h2>Efectivo</h2>
+        <button class="cerrar" id="cerrarPanel">Cerrar</button>
+      </div>
+
+      <div class="importe">
+        <input id="aImporte" inputmode="decimal" placeholder="0,00" autocomplete="off">
+        <span>€</span>
+      </div>
+
+      <div class="seg" id="tipo" style="margin-top:10px">
+        <button data-v="gasto" class="on">Gasto</button>
+        <button data-v="ingreso">Ingreso</button>
+      </div>
+
+      <label class="t">Referencia</label>
+      <div class="chips" id="chips"></div>
+      <input id="refNueva" class="campo" placeholder="Nombre de la nueva referencia" autocomplete="off">
+
+      <label class="t">Fecha</label>
+      <input type="date" id="aFecha" class="campo">
+
+      <label class="t">Descripción (opcional)</label>
+      <input id="aDesc" class="campo" placeholder="Ej.: comida con amigos" autocomplete="off">
+
+      <button class="guardar" id="aGuardar">Guardar</button>
+      <div class="msg" id="aMsg"></div>
+
+      <label class="t">Últimos apuntes en efectivo</label>
+      <div class="tarjeta" style="margin-top:0;padding:4px 14px">
+        <div id="aUltimos"></div>
+      </div>
+    </div>
   </div>
 
   <div class="modal" id="modal">
@@ -233,8 +346,12 @@
     }
 
     // Año y mes del movimiento (según la Fecha Oper)
+    // (acepta también el formato de la versión antigua de la API)
     function periodo(g) {
-      return { a: g.anio, m: g.mes };
+      return {
+        a: g.anio !== undefined ? g.anio : g.anioR,
+        m: g.mes !== undefined ? g.mes : g.mesR
+      };
     }
 
     // Neto por Referencia: así una devolución o un Bizum recibido resta del gasto
@@ -257,14 +374,23 @@
     // ---------- Pintado ----------
     function mostrar() {
       const d = estado.datos[estado.ambito];
+      $('fab').classList.toggle('on', estado.ambito === 'personal');
       if (!d) {
         $('saldo').textContent = '—';
         $('fechaSaldo').textContent = '';
+        $('cartera').style.display = 'none';
         ['kIng', 'kGas', 'kBal'].forEach(id => $(id).textContent = '—');
         return;
       }
       $('saldo').textContent = d.saldo === null ? '—' : eur.format(d.saldo);
-      $('fechaSaldo').textContent = d.fechaSaldo ? 'Último movimiento: ' + d.fechaSaldo : '';
+      $('fechaSaldo').textContent = d.fechaSaldo ? 'Banco · último movimiento: ' + d.fechaSaldo : '';
+      if (d.efectivo) {
+        $('cartera').innerHTML = 'Efectivo en cartera: <b class="' +
+          (d.efectivo.saldo < 0 ? 'gasto' : '') + '">' + eur.format(d.efectivo.saldo) + '</b>';
+        $('cartera').style.display = 'block';
+      } else {
+        $('cartera').style.display = 'none';
+      }
       prepararFiltros(d.grupos);
       pintar(d.grupos);
     }
@@ -352,7 +478,7 @@
         '&clave=' + encodeURIComponent(clave) + '&t=' + Date.now();
 
       fetch(url)
-        .then(r => r.json())
+        .then(leerRespuesta)
         .then(r => {
           if (!r.ok) {
             if (r.error === 'Clave incorrecta') {
@@ -369,7 +495,147 @@
           const h = new Date();
           aviso('Actualizado a las ' + h.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }));
         })
-        .catch(() => aviso('Sin conexión: mostrando los últimos datos guardados'));
+        .catch(err => aviso(textoError(err)));
+    }
+
+    // Convierte la respuesta en JSON o explica por qué no lo es
+    function leerRespuesta(resp) {
+      return resp.text().then(texto => {
+        try {
+          return JSON.parse(texto);
+        } catch (e) {
+          const pista = /accounts\.google|ServiceLogin|Iniciar sesi/i.test(texto)
+            ? 'Google pide iniciar sesión: el acceso de la implementación no es "Cualquier usuario"'
+            : 'La API no devolvió datos (código ' + resp.status + '): ' + texto.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120);
+          throw new Error(pista);
+        }
+      });
+    }
+
+    function textoError(err) {
+      const msg = err && err.message ? err.message : String(err);
+      if (/Load failed|Failed to fetch|NetworkError/i.test(msg)) {
+        return 'Sin conexión con la API. Revisa tu conexión o el acceso "Cualquier usuario".';
+      }
+      return 'Error: ' + msg;
+    }
+
+    // ---------- Apuntes de efectivo ----------
+    let refElegida = null;
+
+    function hoyISO() {
+      const d = new Date();
+      d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+      return d.toISOString().slice(0, 10);
+    }
+
+    function avisoApunte(texto, error) {
+      $('aMsg').textContent = texto;
+      $('aMsg').style.color = error ? 'var(--gasto)' : 'var(--suave)';
+    }
+
+    function abrirPanel() {
+      $('aFecha').value = hoyISO();
+      avisoApunte('');
+      pintarChips();
+      pintarUltimosEfectivo();
+      $('panel').classList.add('on');
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => $('aImporte').focus(), 80);
+    }
+
+    function cerrarPanel() {
+      $('panel').classList.remove('on');
+      document.body.style.overflow = '';
+    }
+
+    // Referencias de la vista Personal, de más a menos usadas
+    function pintarChips() {
+      const d = estado.datos.personal;
+      const uso = {};
+      if (d) d.grupos.forEach(g => {
+        if (g.ref !== 'Sin referencia') uso[g.ref] = (uso[g.ref] || 0) + (g.n || 1);
+      });
+      const refs = Object.keys(uso).sort((a, b) => uso[b] - uso[a] || a.localeCompare(b, 'es'));
+
+      $('chips').innerHTML =
+        refs.map(r => `<button class="chip${r === refElegida ? ' on' : ''}" data-r="${esc(r)}">${esc(r)}</button>`).join('') +
+        '<button class="chip nueva" data-r="">+ Nueva</button>';
+      $('refNueva').style.display = refElegida === '' ? 'block' : 'none';
+    }
+
+    function pintarUltimosEfectivo() {
+      const d = estado.datos.personal;
+      const lista = d && d.efectivo ? d.efectivo.ultimos : [];
+      $('aUltimos').innerHTML = lista.length
+        ? lista.map(x => `
+            <div class="apunte">
+              <div class="txt">${esc(x.ref)}<small>${esc(x.fecha)}${x.descripcion ? ' · ' + esc(x.descripcion) : ''}</small></div>
+              <strong class="${x.importe < 0 ? 'gasto' : 'ingreso'}">${conSigno(x.importe)}</strong>
+              ${x.registrado ? `<button class="borrar" data-fila="${x.fila}" data-reg="${x.registrado}" aria-label="Borrar">×</button>` : ''}
+            </div>`).join('')
+        : '<div class="vacio">Aún no hay apuntes</div>';
+    }
+
+    function leerImporte() {
+      let s = $('aImporte').value.replace(/[\s€]/g, '');
+      if (s.indexOf(',') >= 0) s = s.replace(/\./g, '').replace(',', '.');
+      return parseFloat(s);
+    }
+
+    function enviar(cuerpo) {
+      cuerpo.clave = leer('fin_clave');
+      // Cuerpo como texto plano: así el navegador no necesita permisos extra (CORS)
+      return fetch(API_URL, { method: 'POST', body: JSON.stringify(cuerpo) })
+        .then(leerRespuesta)
+        .then(r => {
+          if (!r.ok) throw new Error(r.error);
+          estado.datos.personal = r.datos;
+          escribir('fin_cache2_personal', JSON.stringify(r.datos));
+          if (estado.ambito === 'personal') mostrar();
+          pintarUltimosEfectivo();
+          return r;
+        });
+    }
+
+    function guardarApunte() {
+      const importe = leerImporte();
+      if (!(importe > 0)) return avisoApunte('Escribe un importe', true);
+      const ref = refElegida === '' ? $('refNueva').value.trim() : refElegida;
+      if (!ref) return avisoApunte(refElegida === '' ? 'Escribe el nombre de la referencia' : 'Elige una referencia', true);
+
+      const tipo = $('tipo').querySelector('.on').dataset.v;
+      $('aGuardar').disabled = true;
+      avisoApunte('Guardando…');
+
+      enviar({
+        accion: 'guardar',
+        importe: tipo === 'gasto' ? -importe : importe,
+        referencia: ref,
+        fecha: $('aFecha').value,
+        descripcion: $('aDesc').value.trim()
+      })
+        .then(() => {
+          avisoApunte('✓ Guardado: ' + (tipo === 'gasto' ? '-' : '+') + eur.format(importe) + ' en ' + ref);
+          $('aImporte').value = '';
+          $('aDesc').value = '';
+          $('refNueva').value = '';
+          $('aFecha').value = hoyISO();
+          refElegida = null;
+          marcarSeg('tipo', 'gasto');
+          pintarChips();
+        })
+        .catch(err => avisoApunte(textoError(err), true))
+        .finally(() => { $('aGuardar').disabled = false; });
+    }
+
+    function borrarApunte(boton) {
+      if (!confirm('¿Borrar este apunte?')) return;
+      boton.disabled = true;
+      avisoApunte('Borrando…');
+      enviar({ accion: 'borrar', fila: Number(boton.dataset.fila), registrado: Number(boton.dataset.reg) })
+        .then(() => avisoApunte('Apunte borrado'))
+        .catch(err => { boton.disabled = false; avisoApunte(textoError(err), true); });
     }
 
     function pedirClave(msg) {
@@ -396,6 +662,24 @@
       if (!hay) return;
       estado.mes = estado.mes === m ? 'todos' : m;
       mostrar();
+    });
+
+    // Efectivo
+    segmento('tipo', () => { });
+    $('fab').addEventListener('click', abrirPanel);
+    $('cerrarPanel').addEventListener('click', cerrarPanel);
+    $('panel').addEventListener('click', e => { if (e.target === $('panel')) cerrarPanel(); });
+    $('chips').addEventListener('click', e => {
+      const b = e.target.closest('.chip');
+      if (!b) return;
+      refElegida = b.dataset.r;
+      pintarChips();
+      if (refElegida === '') $('refNueva').focus();
+    });
+    $('aGuardar').addEventListener('click', guardarApunte);
+    $('aUltimos').addEventListener('click', e => {
+      const b = e.target.closest('.borrar');
+      if (b) borrarApunte(b);
     });
 
     $('btnClave').addEventListener('click', () => pedirClave());
@@ -426,3 +710,4 @@
   </script>
 </body>
 </html>
+
